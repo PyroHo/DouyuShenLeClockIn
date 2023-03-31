@@ -2,7 +2,7 @@
 // @name         神乐直播间自动打卡
 // @namespace    pyroho
 // @version      0.3
-// @description  只是一个简单的等待循环程序，等到下一次需要打卡的时候启用脚本就可以了（不然程序记录的打卡时间跟真实打卡的时间对不上）
+// @description  只是一个简单的等待循环程序。初次安装的时候如果已经打卡，时间可能会对不上，下次就好了。
 // @author       PyroHo
 // @match        https://www.douyu.com/85894
 // @match        https://www.douyu.com/122402
@@ -60,8 +60,16 @@ function autoClockIn() {
 }
 
 document.addEventListener('readystatechange', function() {
-  if(document.readyState !== 'complete'){ console.log("document not ready!!", document.readyState); return; }
+  if(document.readyState !== 'complete'){
+    console.log("document not ready!!", document.readyState);
+    return;
+  }
   console.log("document ready!!", document.readyState);
   timestop = setTimeout(autoClockIn, 5 * 1000);
 }, false);
+
 console.log("ClockIn script execing");
+
+
+
+
