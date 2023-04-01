@@ -27,6 +27,25 @@ const timesave = new Proxy({}, {
 });
 let timestop;
 
+// 创建一个链接
+function nodeLink(text, link) {
+  let node = document.createElement("a");
+  node.innerText = text;
+  node.setAttribute('href', link);
+  node.setAttribute('style', `
+      display: inline-block;
+      padding: 3px;
+      margin-right: 8px;
+      vertical-align: middle;
+      color: #fff;
+      border-radius: 3px;
+      background-color: #888;
+      line-height: 1.5;
+      font-size: 12px;
+      cursor: pointer;
+    `);
+  return node;
+}
 // 创建一个按钮节点
 function nodeButton(text, onclick) {
     let btnNode = document.createElement("button");
@@ -89,6 +108,14 @@ document.addEventListener('readystatechange', function() {
     wrap.appendChild(nodeButton('打卡', () => {
       autoClockIn(true); // true 强制打卡
     }));
+    [['星','85894']
+    ,['华','122402']
+    ,['粤','6566671']
+    ,['欧','20415']
+    ].map(([text, link]) => {
+      if(roomId === link) return;
+      wrap.appendChild(nodeLink(text, link));
+    });
   }, 5000);
 }, false);
 
