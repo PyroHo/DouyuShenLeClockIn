@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         神乐直播间自动打卡
 // @namespace    pyroho
-// @version      0.4
+// @version      0.5
 // @description  一个简单的等待循环程序。
 // @author       PyroHo
 // @match        https://www.douyu.com/85894
