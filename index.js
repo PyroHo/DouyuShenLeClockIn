@@ -34,7 +34,7 @@ function nodeLink(text, link) {
   node.setAttribute('href', link);
   node.setAttribute('style', `
       display: inline-block;
-      padding: 3px;
+      padding: 0 3px;
       margin-right: 8px;
       vertical-align: middle;
       color: #fff;
@@ -53,7 +53,7 @@ function nodeButton(text, onclick) {
     btnNode.innerText = text;
     btnNode.setAttribute('style', `
       display: inline-block;
-      padding: 3px;
+      padding: 0 3px;
       border-radius: 3px;
       margin-right: 8px;
       vertical-align: middle;
