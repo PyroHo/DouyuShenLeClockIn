@@ -2,7 +2,7 @@
 // @name         神乐直播间自动打卡
 // @namespace    pyroho
 // @version      0.4
-// @description  只是一个简单的等待循环程序。初次安装的时候如果已经打卡，时间可能会对不上，下次就好了。
+// @description  一个简单的等待循环程序。
 // @author       PyroHo
 // @match        https://www.douyu.com/85894
 // @match        https://www.douyu.com/122402
