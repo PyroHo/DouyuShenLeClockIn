@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         神乐直播间自动打卡
 // @namespace    pyroho
-// @version      0.3
+// @version      0.4
 // @description  只是一个简单的等待循环程序。初次安装的时候如果已经打卡，时间可能会对不上，下次就好了。
 // @author       PyroHo
 // @match        https://www.douyu.com/85894
@@ -27,13 +27,34 @@ const timesave = new Proxy({}, {
 });
 let timestop;
 
+// 创建一个按钮节点
+function nodeButton(text, onclick) {
+    let btnNode = document.createElement("button");
+    btnNode.addEventListener('click', onclick, false);
+    btnNode.innerText = text;
+    btnNode.setAttribute('style', `
+      display: inline-block;
+      padding: 3px;
+      border-radius: 3px;
+      margin-right: 8px;
+      vertical-align: middle;
+      color: #fff;
+      background-color: #4caf50;
+      line-height: 1.5;
+      font-size: 12px;
+      cursor: pointer;
+    `);
+    return btnNode;
+}
+// 转化时间戳为可读时间
 function dateToStr(ms) {
   const date = new Date(ms);
   return ['getMonth', 'getDate', 'getHours', 'getMinutes'].map((f, i) => {
     return date[f]() + (f==='getMonth' ? 1:0) + ['月','日','时','分'][i];
   }).join('');
 }
-function autoClockIn() {
+// 创建打卡循环
+function autoClockIn(force = false) {
   const textarea = document.querySelector('textarea.ChatSend-txt');
   const button = document.querySelector('div.ChatSend-button');
 
@@ -43,7 +64,7 @@ function autoClockIn() {
   textarea.setAttribute('placeholder', `上次自动打卡：${ dateToStr(clockInTime) }`);
 
   clearTimeout(timestop);
-  if (timeGoes >= clockInInterval) {
+  if (force || timeGoes >= clockInInterval) {
     let tempVal = textarea.value;
     // 如果上次打卡时间不存在或距离当前时间已经超过了30分钟，则进行打卡操作
     textarea.value = "#打卡";
@@ -60,16 +81,17 @@ function autoClockIn() {
 }
 
 document.addEventListener('readystatechange', function() {
-  if(document.readyState !== 'complete'){
-    console.log("document not ready!!", document.readyState);
-    return;
-  }
+  if(document.readyState !== 'complete'){ return; }
   console.log("document ready!!", document.readyState);
-  timestop = setTimeout(autoClockIn, 5 * 1000);
+  timestop = setTimeout(() => {
+    autoClockIn();
+    const wrap = document.querySelector('div.ChatToolBar');
+    wrap.appendChild(nodeButton('打卡', () => {
+      autoClockIn(true); // true 强制打卡
+    }));
+  }, 5000);
 }, false);
 
+
+
 console.log("ClockIn script execing");
-
-
-
-
