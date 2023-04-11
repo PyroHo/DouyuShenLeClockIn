@@ -10,7 +10,6 @@
 // @match        https://www.douyu.com/20415
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=douyu.com
 // @license      MIT
-// @grant        unsafeWindow
 // ==/UserScript==
 const clockInInterval = 30 * 60 * 1000 + 10000; // 打卡间隔30分钟，单位为毫秒
 const roomId = /\d+$/i.exec(window.location.href)[0]; // 通过网页地址获取房间号
@@ -51,6 +50,7 @@ function nodeButton(text, onclick) {
     let btnNode = document.createElement("button");
     btnNode.addEventListener('click', onclick, false);
     btnNode.innerText = text;
+    btnNode.classList.add('btn-clock-in');
     btnNode.setAttribute('style', `
       display: inline-block;
       padding: 0 3px;
@@ -64,6 +64,17 @@ function nodeButton(text, onclick) {
       cursor: pointer;
     `);
     return btnNode;
+}
+// 插入按钮
+function insertDom(selector, attrs) {
+  const wrap = document.querySelector(selector);
+  wrap.appendChild(nodeButton('打卡', () => {
+    autoClockIn(true); // true 强制打卡
+  }));
+  attrs.map(([text, link]) => {
+    if(roomId === link) return;
+    wrap.appendChild(nodeLink(text, link));
+  });
 }
 // 转化时间戳为可读时间
 function dateToStr(ms) {
@@ -80,7 +91,6 @@ function autoClockIn(force = false) {
   const clockInTime = parseInt(timesave[roomId]) || 0; // 获取上次打卡时间
   const currentTime = new Date().getTime(); // 获取当前时间
   const timeGoes = currentTime - clockInTime;
-  textarea.setAttribute('placeholder', `上次自动打卡：${ dateToStr(clockInTime) }`);
 
   clearTimeout(timestop);
   if (force || timeGoes >= clockInInterval) {
@@ -89,36 +99,35 @@ function autoClockIn(force = false) {
     textarea.value = "#打卡";
     button.click();
     textarea.value = tempVal;
-    textarea.setAttribute('placeholder', `上次自动打卡：${ dateToStr(currentTime) }`);
     timesave[roomId] = currentTime; // 将本次打卡时间存储在本地存储中
+
+    textarea.setAttribute('placeholder', `上次自动打卡：${ dateToStr(currentTime) }`);
     timestop = setTimeout(autoClockIn, clockInInterval);
-    console.log("#打卡");
   } else {
+    textarea.setAttribute('placeholder', `上次自动打卡：${ dateToStr(clockInTime) }`);
     timestop = setTimeout(autoClockIn, clockInInterval - timeGoes);
-    console.log("没到打卡时间");
   }
 }
 
 document.addEventListener('readystatechange', function() {
-  if(document.readyState !== 'complete'){ return; }
-  console.log("document ready!!", document.readyState);
-  timestop = setTimeout(() => {
-    autoClockIn();
-    const wrap = document.querySelector('div.ChatToolBar');
-    wrap.appendChild(nodeButton('打卡', () => {
-      autoClockIn(true); // true 强制打卡
-    }));
-    [['星','85894']
-    ,['华','122402']
-    ,['粤','6566671']
-    ,['欧','20415']
-    ].map(([text, link]) => {
-      if(roomId === link) return;
-      wrap.appendChild(nodeLink(text, link));
-    });
-  }, 5000);
+  if(document.readyState === 'complete'){
+    timestop = setTimeout(beat, 5000);
+  }
 }, false);
 
-
-
-console.log("ClockIn script execing");
+function beat() {
+  let beatTimes = 20;
+  while(--beatTimes > 0) {
+    setTimeout(() => {
+      if(document.querySelector('.btn-clock-in') === null) {
+        autoClockIn();
+        insertDom('div.ChatToolBar',
+                  [['星','85894']
+                   ,['华','122402']
+                   ,['粤','6566671']
+                   ,['欧','20415']
+                  ]);
+      }
+    }, beatTimes*1000)
+  }
+}
