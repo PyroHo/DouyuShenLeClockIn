@@ -122,10 +122,10 @@ function beat() {
       if(document.querySelector('.btn-clock-in') === null) {
         autoClockIn();
         insertDom('div.ChatToolBar',
-                  [['星','85894']
-                   ,['华','122402']
-                   ,['粤','6566671']
-                   ,['欧','20415']
+                  [ ['星', '85894']
+                  , ['华', '122402']
+                  , ['粤', '6566671']
+                  , ['欧', '20415']
                   ]);
       }
     }, beatTimes*1000)
