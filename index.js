@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         神乐直播间自动打卡
 // @namespace    pyroho
-// @version      1.0
+// @version      1.1
 // @description  一个简单的等待循环程序。有任何问题，欢迎反馈
 // @author       PyroHo
-// @match        https://www.douyu.com/85894
-// @match        https://www.douyu.com/122402
-// @match        https://www.douyu.com/6566671
-// @match        https://www.douyu.com/20415
+// @match        https://www.douyu.com/*85894
+// @match        https://www.douyu.com/*122402
+// @match        https://www.douyu.com/*6566671
+// @match        https://www.douyu.com/*20415
+// @run-at       document-idle
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=douyu.com
 // @license      MIT
 // ==/UserScript==
@@ -71,9 +72,9 @@ function insertDom(selector, attrs) {
   wrap.appendChild(nodeButton('打卡', () => {
     autoClockIn(true); // true 强制打卡
   }));
-  attrs.map(([text, link]) => {
-    if(roomId === link) return;
-    wrap.appendChild(nodeLink(text, link));
+  attrs.map(([name, id]) => {
+    if(roomId === id) return;
+    wrap.appendChild(nodeLink(name, `/${id}`));
   });
 }
 // 转化时间戳为可读时间
