@@ -1,20 +1,20 @@
 // ==UserScript==
 // @name         神乐直播间自动打卡
 // @namespace    pyroho
-// @version      1.1
+// @version      1.2
 // @description  一个简单的等待循环程序。有任何问题，欢迎反馈
 // @author       PyroHo
 // @match        https://www.douyu.com/*85894
 // @match        https://www.douyu.com/*122402
 // @match        https://www.douyu.com/*6566671
 // @match        https://www.douyu.com/*20415
-// @run-at       document-idle
+// @run-at       document-start
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=douyu.com
 // @license      MIT
 // ==/UserScript==
-const clockInInterval = 30 * 60 * 1000 + 10000; // 打卡间隔30分钟，单位为毫秒
-const roomId = /\d+$/i.exec(window.location.href)[0]; // 通过网页地址获取房间号
-const timesave = new Proxy({}, {
+const CLOCK_IN_INTERVAL = 30 * 60 * 1000 + 10000; // 打卡间隔30分钟，单位为毫秒
+const ROOM_ID = /\d+$/i.exec(window.location.href)[0]; // 通过网页地址获取房间号
+const TimeSave = new Proxy({}, {
   get(target, prop, receiver) {
     return localStorage.getItem(`lastClockInTime${prop}`);
   },
@@ -25,7 +25,7 @@ const timesave = new Proxy({}, {
     localStorage.removeItem(`lastClockInTime${key}`);
   },
 });
-let timestop;
+let timestop = ()=>{};
 
 // 创建一个链接
 function nodeLink(text, link) {
@@ -67,68 +67,89 @@ function nodeButton(text, onclick) {
     return btnNode;
 }
 // 插入按钮
-function insertDom(selector, attrs) {
-  const wrap = document.querySelector(selector);
-  wrap.appendChild(nodeButton('打卡', () => {
-    autoClockIn(true); // true 强制打卡
-  }));
-  attrs.map(([name, id]) => {
-    if(roomId === id) return;
+function insertDom() {
+  const wrap = document.querySelector('div.ChatToolBar');
+  const domInfo = [ ['星', '85894']
+    , ['华', '122402']
+    , ['粤', '6566671']
+    , ['欧', '20415']
+  ];
+  wrap.appendChild(nodeButton('打卡', () => autoClockIn(true)));
+  domInfo.map(([name, id]) => {
+    if(ROOM_ID === id) return;
     wrap.appendChild(nodeLink(name, `/${id}`));
   });
 }
-// 转化时间戳为可读时间
+// 可读日期
 function dateToStr(ms) {
   const date = new Date(ms);
   return ['getMonth', 'getDate', 'getHours', 'getMinutes'].map((f, i) => {
     return date[f]() + (f==='getMonth' ? 1:0) + ['月','日','时','分'][i];
   }).join('');
 }
-// 创建打卡循环
+// 可读时间
+function timeStr(ms) {
+  const date = new Date(ms);
+  return ['getMinutes', 'getSeconds'].map(f => date[f]()).join(':');
+}
+// 一秒钟刷新一次时间
+// 返回一个函数：调用即可停止
+function loopShowTimeInElement({ele, prop, delay=0, onclose=()=>{}}) {
+  const targetTime = new Date(Date.now() + delay);
+  let stop;
+  (function updateTime() {
+    const timeobj = timeStr(targetTime - Date.now());
+    ele.setAttribute(prop, `下次打卡：${timeobj}`)
+    if(Date.now() > targetTime) {
+      clearTimeout(stop);
+      onclose();
+    } else {
+      stop = setTimeout(updateTime, 1000);
+    }
+  })();
+  return () => clearTimeout(stop);
+}
+// 创建打卡，自带循环
 function autoClockIn(force = false) {
   const textarea = document.querySelector('textarea.ChatSend-txt');
   const button = document.querySelector('div.ChatSend-button');
 
-  const clockInTime = parseInt(timesave[roomId]) || 0; // 获取上次打卡时间
-  const currentTime = new Date().getTime(); // 获取当前时间
-  const timeGoes = currentTime - clockInTime;
+  const lastClockIn = parseInt(TimeSave[ROOM_ID]) || 0; // 获取上次打卡时间
+  const now = Date.now(); // 获取当前时间
+  const timeGoes = now - lastClockIn;
+  let nextClockInDelay = CLOCK_IN_INTERVAL-timeGoes;
 
-  clearTimeout(timestop);
-  if (force || timeGoes >= clockInInterval) {
-    let tempVal = textarea.value;
+  timestop();
+  if (force || timeGoes >= CLOCK_IN_INTERVAL) {
+    const temp = textarea.value;
     // 如果上次打卡时间不存在或距离当前时间已经超过了30分钟，则进行打卡操作
     textarea.value = "#打卡";
     button.click();
-    textarea.value = tempVal;
-    timesave[roomId] = currentTime; // 将本次打卡时间存储在本地存储中
-
-    textarea.setAttribute('placeholder', `上次自动打卡：${ dateToStr(currentTime) }`);
-    timestop = setTimeout(autoClockIn, clockInInterval);
-  } else {
-    textarea.setAttribute('placeholder', `上次自动打卡：${ dateToStr(clockInTime) }`);
-    timestop = setTimeout(autoClockIn, clockInInterval - timeGoes);
+    textarea.value = temp;
+    TimeSave[ROOM_ID] = now; // 将本次打卡时间存储在本地存储中
+    nextClockInDelay = CLOCK_IN_INTERVAL;
   }
+
+  timestop = loopShowTimeInElement({
+    ele: textarea,
+    prop: 'placeholder',
+    delay: nextClockInDelay,
+    onclose: autoClockIn,
+  });
 }
 
 document.addEventListener('readystatechange', function() {
   if(document.readyState === 'complete'){
-    timestop = setTimeout(beat, 5000);
+    setTimeout(() => {
+      let beatTotal = 20; // 心跳检查次数
+      while(--beatTotal) {
+        setTimeout(() => {
+          if(document.querySelector('.btn-clock-in') === null) {
+            autoClockIn();
+            insertDom();
+          }
+        }, beatTotal*1000)
+      }
+    }, 5000);
   }
 }, false);
-
-function beat() {
-  let beatTimes = 20;
-  while(--beatTimes > 0) {
-    setTimeout(() => {
-      if(document.querySelector('.btn-clock-in') === null) {
-        autoClockIn();
-        insertDom('div.ChatToolBar',
-                  [ ['星', '85894']
-                  , ['华', '122402']
-                  , ['粤', '6566671']
-                  , ['欧', '20415']
-                  ]);
-      }
-    }, beatTimes*1000)
-  }
-}
