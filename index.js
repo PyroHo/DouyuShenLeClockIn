@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         神乐直播间自动打卡
 // @namespace    pyroho
-// @version      1.2
+// @version      1.3
 // @description  一个简单的等待循环程序。有任何问题，欢迎反馈
 // @author       PyroHo
 // @match        https://www.douyu.com/*85894
@@ -80,13 +80,6 @@ function insertDom() {
     wrap.appendChild(nodeLink(name, `/${id}`));
   });
 }
-// 可读日期
-function dateToStr(ms) {
-  const date = new Date(ms);
-  return ['getMonth', 'getDate', 'getHours', 'getMinutes'].map((f, i) => {
-    return date[f]() + (f==='getMonth' ? 1:0) + ['月','日','时','分'][i];
-  }).join('');
-}
 // 可读时间
 function timeStr(ms) {
   const date = new Date(ms);
@@ -138,18 +131,16 @@ function autoClockIn(force = false) {
   });
 }
 
-document.addEventListener('readystatechange', function() {
-  if(document.readyState === 'complete'){
+setTimeout(() => {
+  let beatTotal = 20; // 心跳检查次数
+  while(--beatTotal) {
     setTimeout(() => {
-      let beatTotal = 20; // 心跳检查次数
-      while(--beatTotal) {
-        setTimeout(() => {
-          if(document.querySelector('.btn-clock-in') === null) {
-            autoClockIn();
-            insertDom();
-          }
-        }, beatTotal*1000)
+      const winLoaded = document.readyState === 'complete';
+      const eleNotLoaded = document.querySelector('.btn-clock-in') === null;
+      if(winLoaded && eleNotLoaded) {
+        autoClockIn();
+        insertDom();
       }
-    }, 5000);
+    }, beatTotal*1000)
   }
-}, false);
+}, 5000);
