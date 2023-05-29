@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         神乐直播间自动打卡
 // @namespace    pyroho
-// @version      1.4
+// @version      1.5
 // @description  一个简单的等待循环程序。有任何问题，欢迎反馈
 // @author       PyroHo
 // @match        https://www.douyu.com/*85894
@@ -26,45 +26,47 @@ const TimeSave = new Proxy({}, {
   },
 });
 let timestop = ()=>{};
+const STYLE = `
+  div[class*=host][class*=danmuItem] {
+    display: none !important;
+  }
+  .btn-ci {
+    display: inline-block;
+    padding: 0 3px;
+    border-radius: 3px;
+    margin-right: 8px;
+    vertical-align: middle;
+    line-height: 1.5;
+    font-size: 12px;
+    cursor: pointer;
+    color: #fff !important;
+    background-color: #888 !important;
+  }
+  .btn-ci.btn-ci-cur {
+    color: #7e7e7e !important;
+    background-color: #464646 !important;
+    /* cursor: not-allowed; */
+  }
+  .btn-ci.btn-clock-in {
+    background-color: #4caf50 !important;
+  }
+`;
 
 // 创建一个链接
 function nodeLink(text, link) {
   let node = document.createElement("a");
   node.innerText = text;
   node.setAttribute('href', link);
-  node.setAttribute('style', `
-      display: inline-block;
-      padding: 0 3px;
-      margin-right: 8px;
-      vertical-align: middle;
-      color: #fff;
-      border-radius: 3px;
-      background-color: #888;
-      line-height: 1.5;
-      font-size: 12px;
-      cursor: pointer;
-    `);
+  node.classList.add('btn-room-change');
   return node;
 }
 // 创建一个按钮节点
 function nodeButton(text, onclick) {
-    let btnNode = document.createElement("button");
-    btnNode.addEventListener('click', onclick, false);
-    btnNode.innerText = text;
-    btnNode.classList.add('btn-clock-in');
-    btnNode.setAttribute('style', `
-      display: inline-block;
-      padding: 0 3px;
-      border-radius: 3px;
-      margin-right: 8px;
-      vertical-align: middle;
-      color: #fff;
-      background-color: #4caf50;
-      line-height: 1.5;
-      font-size: 12px;
-      cursor: pointer;
-    `);
-    return btnNode;
+    let btn = document.createElement("button");
+    btn.addEventListener('click', onclick, false);
+    btn.innerText = text;
+    btn.classList.add('btn-ci', 'btn-clock-in');
+    return btn;
 }
 // 插入按钮
 function insertDom() {
@@ -74,11 +76,16 @@ function insertDom() {
     , ['粤', '6566671']
     , ['欧', '20415']
   ];
-  wrap.appendChild(nodeButton('打卡', () => autoClockIn(true)));
-  domInfo.map(([name, id]) => {
-    if(ROOM_ID === id) return;
-    wrap.appendChild(nodeLink(name, `/${id}`));
+  domInfo.forEach(([name, id]) => {
+    let btn = nodeLink(name, `/${id}`);
+    if(ROOM_ID === id) {
+      btn.classList.add('btn-ci-cur');
+      btn.removeAttribute('href');
+    }
+    btn.classList.add('btn-ci');
+    wrap.appendChild(btn);
   });
+  wrap.appendChild(nodeButton('打卡', () => autoClockIn(true)));
 }
 // 可读时间
 function timeStr(ms) {
@@ -149,7 +156,7 @@ setTimeout(() => {
       if(winLoaded && eleNotLoaded) {
         autoClockIn();
         insertDom();
-        loadStyle(`div[class*=host][class*=danmuItem]{ display: none !important; }`)
+        loadStyle(STYLE);
       }
     }, beatTotal*1000)
   }
