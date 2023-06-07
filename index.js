@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         神乐直播间自动打卡
 // @namespace    pyroho
-// @version      1.5
+// @version      1.7
 // @description  一个简单的等待循环程序。有任何问题，欢迎反馈
 // @author       PyroHo
 // @match        https://www.douyu.com/*85894
@@ -147,17 +147,14 @@ function loadStyle(css) {
   head.appendChild(style);
 }
 
-setTimeout(() => {
-  let beatTotal = 20; // 心跳检查次数
-  while(--beatTotal) {
-    setTimeout(() => {
-      const winLoaded = document.readyState === 'complete';
-      const eleNotLoaded = document.querySelector('.btn-clock-in') === null;
-      if(winLoaded && eleNotLoaded) {
-        autoClockIn();
-        insertDom();
-        loadStyle(STYLE);
-      }
-    }, beatTotal*1000)
+(function loadApp(total, stop=0) {
+  const appLoaded = document.readyState === 'complete'
+                  && document.querySelector('.btn-clock-in') === null;
+  if(appLoaded) {
+    insertDom();
+    loadStyle(STYLE);
+    clearTimeout(stop);
+    stop = setTimeout(autoClockIn, 1000);
   }
-}, 5000);
+  setTimeout(() => loadApp(--total, stop), 1000);
+})(30);
