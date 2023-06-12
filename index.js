@@ -154,7 +154,7 @@ function loadStyle(css) {
     insertDom();
     loadStyle(STYLE);
     // clearTimeout(stop);
-    stop || (stop = setTimeout(autoClockIn, 3000));
+    stop || (stop = setTimeout(autoClockIn, 4300));
   }
   setTimeout(() => loadApp(--total, stop), 300);
 })(100);
