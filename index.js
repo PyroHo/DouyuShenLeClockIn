@@ -1,19 +1,16 @@
 // ==UserScript==
 // @name         神乐直播间自动打卡
 // @namespace    pyroho
-// @version      1.8
+// @version      1.9
 // @description  一个简单的等待循环程序。有任何问题，欢迎反馈
 // @author       PyroHo
-// @match        https://www.douyu.com/*85894
-// @match        https://www.douyu.com/*122402
-// @match        https://www.douyu.com/*6566671
-// @match        https://www.douyu.com/*20415
+// @match        https://www.douyu.com/*
 // @run-at       document-start
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=douyu.com
 // @license      MIT
 // ==/UserScript==
 const CLOCK_IN_INTERVAL = 30 * 60 * 1000 + 10000; // 打卡间隔30分钟，单位为毫秒
-const ROOM_ID = /\d+$/i.exec(window.location.href)[0]; // 通过网页地址获取房间号
+const ROOM_ID = /(85894|122402|6566671|20415)/i.exec(window.location.href)[0]; // 通过网页地址获取房间号
 const TimeSave = new Proxy({}, {
   get(target, prop, receiver) {
     return localStorage.getItem(`lastClockInTime${prop}`);
@@ -154,7 +151,7 @@ function loadStyle(css) {
     insertDom();
     loadStyle(STYLE);
     // clearTimeout(stop);
-    stop || (stop = setTimeout(autoClockIn, 4300));
+    stop || (stop = setTimeout(autoClockIn, 4500));
   }
   setTimeout(() => loadApp(--total, stop), 300);
 })(100);
