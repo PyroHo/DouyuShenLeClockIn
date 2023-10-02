@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         神乐直播间自动打卡
 // @namespace    pyroho
-// @version      1.9
+// @version      2.1
 // @description  一个简单的等待循环程序。有任何问题，欢迎反馈
 // @author       PyroHo
 // @match        https://www.douyu.com/*
@@ -10,17 +10,11 @@
 // @license      MIT
 // ==/UserScript==
 const CLOCK_IN_INTERVAL = 30 * 60 * 1000 + 10000; // 打卡间隔30分钟，单位为毫秒
-const ROOM_ID = /(85894|122402|6566671|20415)/i.exec(window.location.href)[0]; // 通过网页地址获取房间号
+const ROOM_ID = /(85894|122402|6566671|20415)/i.exec(window.location.href)?.[0] ?? 0; // 通过网页地址获取房间号
 const TimeSave = new Proxy({}, {
-  get(target, prop, receiver) {
-    return localStorage.getItem(`lastClockInTime${prop}`);
-  },
-  set(target, prop, value, receiver) {
-    localStorage.setItem(`lastClockInTime${prop}`, value);
-  },
-  deleteProperty(target, key) {
-    localStorage.removeItem(`lastClockInTime${key}`);
-  },
+  get: (t, prop, r) => localStorage.getItem(`lastClockInTime${prop}`),
+  set: (t, prop, value, r) => localStorage.setItem(`lastClockInTime${prop}`, value),
+  deleteProperty: (t, key) => localStorage.removeItem(`lastClockInTime${key}`),
 });
 let timestop = ()=>{};
 const STYLE = `
@@ -89,14 +83,32 @@ function timeStr(ms) {
   const date = new Date(ms);
   return ['getMinutes', 'getSeconds'].map(f => date[f]()).join(':');
 }
+// 元素聚焦之后的一定时间内，保持元素聚焦
+// function keepEleFocus(el, time = 8000) {
+//   let timeout = false;
+//   const setTimer = () => {
+//     timeout = setTimeout(() => timeout=false, time)
+//   };
+//   const resetTimer = _.throttle(() => {
+//     if(timeout) {
+//       el.focus();
+//       clearTimeout(timeout);
+//       setTimer();
+//     }
+//   }, 300, { leading: true, trailing: true });
+  
+//   el.addEventListener('focus', () => timeout || setTimer(), false);
+
+//   el.addEventListener('blur', resetTimer, false);
+//   el.addEventListener('input', resetTimer, false);
+// }
 // 一秒钟刷新一次时间
 // 返回一个函数：调用即可停止
 function loopShowTimeInElement({ele, prop, delay=0, onclose=()=>{}}) {
   const targetTime = new Date(Date.now() + delay);
   let stop;
   (function updateTime() {
-    const timeobj = timeStr(targetTime - Date.now());
-    ele.setAttribute(prop, `下次打卡：${timeobj}`)
+    ele.setAttribute(prop, `下次打卡：${timeStr(targetTime - Date.now())}`)
     if(Date.now() > targetTime) {
       clearTimeout(stop);
       onclose();
@@ -110,6 +122,8 @@ function loopShowTimeInElement({ele, prop, delay=0, onclose=()=>{}}) {
 function autoClockIn(force = false) {
   const textarea = document.querySelector('textarea.ChatSend-txt');
   const button = document.querySelector('div.ChatSend-button');
+  
+  // keepEleFocus(textarea);
 
   const lastClockIn = parseInt(TimeSave[ROOM_ID]) || 0; // 获取上次打卡时间
   const now = Date.now(); // 获取当前时间
@@ -144,7 +158,7 @@ function loadStyle(css) {
   head.appendChild(style);
 }
 
-(function loadApp(total, stop=0) {
+ROOM_ID && (function loadApp(total, stop=0) {
   const appLoaded = document.readyState === 'complete'
                   && document.querySelector('.btn-clock-in') === null;
   if(appLoaded) {
